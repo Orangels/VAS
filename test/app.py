@@ -20,7 +20,8 @@ root = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
 
-
+# 返回中文 不乱码
+app.config['JSON_AS_ASCII'] = False
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads/'  # 保存文件位置
 app.url_map.converters['regex'] = RegexConverter

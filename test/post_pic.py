@@ -4,6 +4,7 @@ import requests
 import json
 import time
 import sys
+import traceback
 
 def uploadFile(log):
     url = 'http://127.0.0.1:4000/api/v1/detect'
@@ -39,21 +40,28 @@ def uploadFile(log):
     detail_time = 0
     for i in range(circle_num):
         try:
-
+            # car
+            # files = {'img': ('P001067.png',
+            #                         open('P001067.png',
+            #                              'rb'))}  # 显式的设置文件名
+            # fog
             files = {'img': ('P001067.png',
-                                    open('/Users/liusen/Documents/sz/智慧工地/Vas/test/P001067.png',
-                                         'rb'))}  # 显式的设置文件名
-
+                             open('P000005.png',
+                                  'rb'))}  # 显式的设置文件名
             # post携带的数据
             data = dict(seg=[[0, 0, 200, 300], [200, 0, 400, 300]])
 
             # type = 3 det + seg
             # r = requests.post(url, files=files, data=data)
             # type = 1 det
+            time_start = time.time()
+
             r = requests.post(url, files=files, data=None)
 
             result = json.loads(s=r.text)
+            print(time.time() - time_start)
             print(result)
+            print(r.text)
             # print(result['time_used'])
             # time_total_para += result['prepare_time']
             # time_total += result['time_used']
@@ -62,8 +70,8 @@ def uploadFile(log):
             # image_time += result['image_time']
             # infer_time += result['infer_time']
 
-            if i == (circle_num-1):
-                detail_time = result['detail_time']
+            # if i == (circle_num-1):
+            #     detail_time = result['detail_time']
         # singal_ssd_time += result['ssd_inference']
         # pose_time_total += result['pose_time']
         # reid_time_total += result['reid_time']
@@ -71,7 +79,10 @@ def uploadFile(log):
         # image_time += result['image_time']
         # infer_time += result['infer_time']
         except Exception as e:
-            # print(e)
+            print('***********')
+            print(e)
+            traceback.print_exc()
+            print('***********')
             # print('response: ' + json.dumps(result))
             print('response: ' + r.text)
             with open('error_' + log, 'w') as w:

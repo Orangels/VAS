@@ -43,7 +43,7 @@ def detect_det_seg():
         '''
             获取参数
         '''
-
+        time_start = time.time()
         seg_param = request.values.getlist('seg')
         seg_param_points = []
         for i, item in enumerate(seg_param):
@@ -93,8 +93,13 @@ def detect_det_seg():
         # random_name = name
         filePs = file_dir_path + random_name
         uploaded_file.save(filePs)
+        time_gearman_start = time.time()
+        print('gearman start')
         gearman_res = client(detect_type, filePs, seg_param_points, segpx, segopt)
+        print('gearman end')
+        print('gearman cost {}'.format(time.time()-time_gearman_start))
         os.remove(filePs)
+        print('api cost {}'.format(time.time() - time_start))
         dic = dict(Results=200, request=gearman_res)
         return jsonify(dic)
     except Exception as e:

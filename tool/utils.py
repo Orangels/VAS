@@ -1,7 +1,7 @@
 import json
 import cv2
 import numpy as np
-
+import os
 
 def process_seg_result(filePs=None, seg_param=[], segpx=0, segopt=-1, seg_mask=None):
     """
@@ -44,3 +44,16 @@ def get_roi(img_path, seg_params):
             # cv2.imwrite('/Users/liusen/Documents/sz/智慧工地/Vas/test/{}.jpg'.format(lsPointsChoose[0][0]), ROI)
             img_arr.append(mask)
     return img_arr
+
+
+def transform_extension_path(path, extension='.npy'):
+    file = os.path.basename(path)
+    dir_name = os.path.dirname(path)
+    file_name, extension_name = os.path.splitext(file)
+    file_name = file_name + extension
+    result_path = os.path.join(dir_name, file_name)
+    return result_path
+
+
+if __name__ == '__main__':
+    print(transform_extension_path('/Users/liusen/Documents/sz/智慧工地/Vas/test/test_seg.png'))

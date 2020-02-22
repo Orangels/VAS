@@ -39,7 +39,7 @@ def task_listener_reverse(gearman_worker, gearman_job):
                         output[i][count_i][coor_i] = coor_item
                         # output[i][count_i][coor_i] = int(output[i][count_i][coor_i])
                     elif coor_i == 4:
-                        if coor_item > 0.7:
+                        if coor_item > confidence:
                             coor_item = int(coor_item * 100)
                             output[i][count_i][coor_i] = coor_item
                             result_arr.append(dict(label=labels[i], box=count_item[:4], conf=coor_item))
@@ -48,7 +48,10 @@ def task_listener_reverse(gearman_worker, gearman_job):
     print(result_arr)
     print('cost time {}'.format(time.time() - time_start))
 
-    return json.dumps(obj={'smart_site_det': {
+    # with open('./logs/car_server.log', 'a+') as w:
+    #     w.write('{}'.format(time.time() - time_start) + '\n')
+
+    return json.dumps(obj={'smart_site_det_car': {
         'result': result_arr,
     }})
 
@@ -73,5 +76,5 @@ if __name__ == '__main__':
                                ]
                      )
     gm_worker.set_client_id('python-worker')
-    gm_worker.register_task('smart_site_det', task_listener_reverse)
+    gm_worker.register_task('smart_site_det_car', task_listener_reverse)
     gm_worker.work()
