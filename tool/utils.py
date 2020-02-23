@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import os
 
+
 def process_seg_result(filePs=None, seg_param=[], segpx=0, segopt=-1, seg_mask=None):
     """
     :param filePs:
@@ -12,21 +13,65 @@ def process_seg_result(filePs=None, seg_param=[], segpx=0, segopt=-1, seg_mask=N
     :param seg_mask: mask numpy 转的 str
     :return:
     """
-    img_arr = get_roi(filePs, seg_param)
-    #TODO seg 逻辑
-    return [dict(filePs=filePs, seg_param=seg_param, segpx=segpx, segopt=segopt, seg_mask=seg_mask)]
+    npy_path = transform_extension_path(filePs)
+    # 原图
+    img = cv2.imread(filePs)
+    # seg 分析后的 mask
+    seg_mask = np.load(npy_path)
+
+    mask_rois = get_roi(seg_mask, seg_param)
+
+    result_arr = []
+    for index, lsPointsChoose in enumerate(seg_param):
+        if len(lsPointsChoose) == 2:
+            img_area = (lsPointsChoose[1][0]-lsPointsChoose[0][0]) * (lsPointsChoose[1][1]-lsPointsChoose[0][1])
+        elif len(lsPointsChoose) > 2:
+            img_area = cv2.contourArea(lsPointsChoose)
+        mask_roi = mask_rois[index]
+        if segopt == 0:
+            # 返回覆盖部分
+            mask_segopt = np.where(mask_roi == 1)
+            mask_area = mask_segopt[0].shape[0]
+            # 覆盖比
+            ratio = int(mask_area / img_area * 100)
+            if segpx:
+                c_list = []
+                for i in range(len(mask_segopt)):
+                    c_list.append(mask_segopt[i].reshape(-1, 1))
+                # 坐标
+                mask_coor = np.hstack((c_list[0], c_list[1]))
+                mask_coor = mask_coor.tolist()
+                result_arr.append(dict(ratio=ratio, pixels=mask_coor))
+            else:
+                result_arr.append(dict(ratio=ratio, pixels=[]))
+        elif segopt == 1:
+            # 返回裸露部分
+            mask_segopt = np.where(mask_roi == 2)
+            mask_area = mask_segopt[0].shape[0]
+            # 覆盖比
+            ratio = int(mask_area / img_area * 100)
+            if segpx:
+                c_list = []
+                for i in range(len(mask_segopt)):
+                    c_list.append(mask_segopt[i].reshape(-1, 1))
+                # 坐标
+                mask_coor = np.hstack((c_list[0], c_list[1]))
+                mask_coor = mask_coor.tolist()
+                result_arr.append(dict(ratio=ratio, pixels=mask_coor))
+            else:
+                result_arr.append(dict(ratio=ratio, pixels=[]))
+    os.remove(npy_path)
+    return result_arr
 
 
-def get_roi(img_path, seg_params):
+def get_roi(img, seg_params):
     # lsPointsChoose = [(30, 45), (100, 15), (100, 15), (330, 240), (50, 250)]
     img_arr = []
     for lsPointsChoose in seg_params:
-        img = cv2.imread(img_path)
         mask = np.zeros(img.shape, np.uint8)
         if len(lsPointsChoose) == 2:
             # h * w
             mask[lsPointsChoose[0][1]:lsPointsChoose[1][1], lsPointsChoose[0][0]:lsPointsChoose[1][0]] = img[lsPointsChoose[0][1]:lsPointsChoose[1][1], lsPointsChoose[0][0]:lsPointsChoose[1][0]]
-            # cv2.imwrite('/Users/liusen/Documents/sz/智慧工地/Vas/test/{}.jpg'.format(lsPointsChoose[0][0]), mask)
             img_arr.append(mask)
         elif len(lsPointsChoose) > 2:
             pts = np.array([lsPointsChoose], np.int32)
@@ -42,7 +87,7 @@ def get_roi(img_path, seg_params):
             # cv2.imshow('ROI', ROI)
             # cv2.waitKey(0)
             # cv2.imwrite('/Users/liusen/Documents/sz/智慧工地/Vas/test/{}.jpg'.format(lsPointsChoose[0][0]), ROI)
-            img_arr.append(mask)
+            img_arr.append(ROI)
     return img_arr
 
 
@@ -55,5 +100,42 @@ def transform_extension_path(path, extension='.npy'):
     return result_path
 
 
+def color_encode(labelmap, colors, mode='RGB'):
+    labelmap = labelmap.astype('int')
+    labelmap_rgb = np.zeros((labelmap.shape[0], labelmap.shape[1], 3),
+                            dtype=np.uint8)
+    for label in np.unique(labelmap):
+        if label < 0:
+            continue
+        labelmap_rgb += (labelmap == label)[:, :, np.newaxis] * \
+                        np.tile(colors[label],
+                                (labelmap.shape[0], labelmap.shape[1], 1))
+
+    if mode == 'BGR':
+        return labelmap_rgb[:, :, ::-1]
+    else:
+        return labelmap_rgb
+
+
 if __name__ == '__main__':
-    print(transform_extension_path('/Users/liusen/Documents/sz/智慧工地/Vas/test/test_seg.png'))
+    # print(transform_extension_path('/Users/liusen/Documents/sz/智慧工地/Vas/test/test_seg.png'))
+    # img = cv2.imread('/Users/liusen/Documents/sz/智慧工地/Vas/test/P000014.png')
+    # seg_mask = np.load('/Users/liusen/Documents/sz/智慧工地/Vas/test/mask.npy')
+    # seg_mask = seg_mask.astype(np.uint8)
+    # from scipy.io import loadmat
+    #
+    # colors = loadmat('/Users/liusen/Documents/sz/智慧工地/Vas/test/color150.mat')['colors']
+    # pred_color = color_encode(seg_mask, colors)
+    # im_vis = np.concatenate((img, pred_color),
+    #                         axis=1).astype(np.uint8)
+    # # get_roi(seg_mask, [[(0, 0), (700, 500)], [(700, 0), (1400, 1000)]])
+    # cv2.imshow('test', pred_color)
+    # cv2.waitKey(0)
+
+    seg_mask = np.load('/Users/liusen/Documents/sz/智慧工地/Vas/test/mask.npy')
+    result = process_seg_result(filePs='/Users/liusen/Documents/sz/智慧工地/Vas/test/P000014.png',
+                       seg_param=[[(0, 0), (700, 500)], [(700, 0), (1400, 1000)]],
+                       segpx=1,
+                       segopt=0,
+                       seg_mask=None)
+    print(1)

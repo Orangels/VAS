@@ -7,6 +7,7 @@ import gearman
 import traceback
 
 sys.path.append('/home/user/workspace/priv-0220/Pet-engine')
+sys.path.append('/home/user/workspace/priv-0220/Pet-dev')
 from modules import pet_engine
 
 confidence = 0.7

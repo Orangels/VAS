@@ -1,4 +1,4 @@
-PET_ROOT: '/home/user/workspace/Pet-dev'
+PET_ROOT: '/home/user/workspace/priv-0220/Pet-dev'
 MODULES:
   SSDDET:
     GPU_ID: 0

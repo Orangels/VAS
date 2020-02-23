@@ -5,6 +5,7 @@ import numpy as np
 import os
 import time
 
+
 def check_request_status(job_request, detect_type, filePs=None, seg_param=[], segpx=0, segopt=-1):
     """
     :param job_request:
@@ -31,12 +32,10 @@ def check_request_status(job_request, detect_type, filePs=None, seg_param=[], se
         gearman_dic = json.loads(s=job_request.result, encoding='utf-8')
         seg_result = process_seg_result(filePs=filePs, seg_param=seg_param, segpx=segpx, segopt=segopt,
                                         seg_mask=gearman_dic['smart_site_seg'])
-        # gearman_res = {
-        #     'objs': [],
-        #     'segs': seg_result,
-        # }
-
-        gearman_res = gearman_dic['smart_site_seg']['npy_path']
+        gearman_res = {
+            'objs': [],
+            'segs': seg_result,
+        }
     elif detect_type == 3:
         gearman_res = {
             'objs': [],
@@ -44,8 +43,12 @@ def check_request_status(job_request, detect_type, filePs=None, seg_param=[], se
         }
         for current_request in job_request:
             gearman_dic = json.loads(s=current_request.result, encoding='utf-8')
-            if 'smart_site_det' in gearman_dic:
-                gearman_res['objs'] = gearman_dic['smart_site_det']['result'],
+            print(gearman_dic)
+            if 'smart_site_det_car' in gearman_dic:
+                gearman_res['objs'] += gearman_dic['smart_site_det_car']['result']
+
+            elif 'smart_site_det_fog' in gearman_dic:
+                gearman_res['objs'] += gearman_dic['smart_site_det_fog']['result']
             else:
                 seg_result = process_seg_result(filePs=filePs, seg_param=seg_param, segpx=segpx, segopt=segopt,
                                                 seg_mask=gearman_dic['smart_site_seg'])

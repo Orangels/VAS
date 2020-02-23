@@ -7,6 +7,7 @@ import gearman
 import traceback
 
 sys.path.append('/home/user/workspace/priv-0220/Pet-engine')
+sys.path.append('/home/user/workspace/priv-0220/Pet-dev')
 from modules import pet_engine
 
 confidence = 0.7
@@ -20,11 +21,13 @@ def task_listener_reverse(gearman_worker, gearman_job):
     data_dict = json.loads(s=gearman_job.data)
     path = data_dict['path']
     print(path)
-
+    time_read_img_start = time.time()
     img = cv2.imread(path)
+    time_read_img_end = time.time()
     # 4 * n * 5  类别, 个数, 坐标+置信度
     time_start = time.time()
     output = det(img)
+    time_inference_end = time.time()
     print(output)
     print(len(output))
     result_arr = []
@@ -46,7 +49,9 @@ def task_listener_reverse(gearman_worker, gearman_job):
                         # output[i][count_i][coor_i] = int(output[i][count_i][coor_i]*100)
                 # img = cv2.rectangle(img, (count_item[0], count_item[1]), (count_item[2], count_item[3]), (0, 255, 0), 2)
     print(result_arr)
-    print('cost time {}'.format(time.time() - time_start))
+    print('read img cost time {}'.format(time_read_img_end-time_read_img_start))
+    print('inference cost time {}'.format(time_inference_end-time_start))
+    print('cost time {}'.format(time.time() - time_read_img_start))
 
     # with open('./logs/car_server.log', 'a+') as w:
     #     w.write('{}'.format(time.time() - time_start) + '\n')

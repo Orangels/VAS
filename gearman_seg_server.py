@@ -48,20 +48,31 @@ def write_q(q_file, q_name):
 def task_listener_reverse(gearman_worker, gearman_job):
     global q_file
     global q_name
+    time_start = time.time()
     data_dict = json.loads(s=gearman_job.data)
     path = data_dict['path']
     npy_path = transform_extension_path(path)
     seg_param = data_dict['seg_param']
+    time_read_data = time.time()
+    print('read time cost {}'.format(time_read_data - time_start))
     img_cv = cv2.imread(path)
     img_cv = img_cv[:, :, ::-1]
+    time_read_img = time.time()
+    print('read img time cost {}'.format(time_read_img-time_read_data))
     mask = semseg_inference(img_cv)
+    time_inference = time.time()
+    print('inference time cost {}'.format(time_inference-time_read_img))
     # print(path)
     # print(mask)
     q_file.put(mask)
     q_name.put(npy_path)
+    print('put queue value time cost {}'.format(time.time()-time_inference))
     # print(npy_path)
     # np.save(npy_path, mask)
-    print('npy costt {}'.format(time.time()-time_npy_start))
+    time_cost = time.time()-time_start
+    print('api + read img cost {}'.format(time_cost))
+    with open('./logs/det_server.log', 'a+') as w:
+        w.write('{}'.format(time_cost) + '\n')
     return json.dumps(obj={'smart_site_seg': {
         'path': path,
         'seg_param': seg_param,

@@ -7,7 +7,7 @@ import sys
 import traceback
 
 def uploadFile(log):
-    url = 'http://127.0.0.1:4000/api/v1/detect'
+    url = 'http://127.0.0.1:9000/api/v1/detect'
     # files = {'file': open('D:/tmp/1.jpg', 'rb')}
 
     # headers = requests.utils.default_headers()
@@ -45,19 +45,25 @@ def uploadFile(log):
             #                         open('P001067.png',
             #                              'rb'))}  # 显式的设置文件名
             # fog
-            files = {'img': ('P001067.png',
+            files = {'img': ('P000005.png',
                              open('P000005.png',
                                   'rb'))}  # 显式的设置文件名
+            
+            # seg
+            # files = {'img': ('P000014.png',
+            #                  open('P000014.png',
+            #                       'rb'))}  # 显式的设置文件名
             # post携带的数据
-            data = dict(seg=[[0, 0, 200, 300], [200, 0, 400, 300]])
+            # data = dict(seg=[[0, 0, 1400, 500], [0, 500, 1400, 1000]], segpx=0, segopt=0, od=1)
+            data = dict(seg=[[0, 0, 500, 100], [0, 100, 500, 300]], segpx=0, segopt=0, od=1)
 
             # type = 3 det + seg
             # r = requests.post(url, files=files, data=data)
             # type = 1 det
             time_start = time.time()
 
-            r = requests.post(url, files=files, data=None)
-
+            r = requests.post(url, files=files, data=data)
+            print(r.headers)
             result = json.loads(s=r.text)
             print(time.time() - time_start)
             print(result)
