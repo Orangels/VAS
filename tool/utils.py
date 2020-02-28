@@ -15,10 +15,11 @@ def process_seg_result(filePs=None, seg_param=[], segpx=0, segopt=-1, seg_mask=N
     """
     npy_path = transform_extension_path(filePs)
     # 原图
-    img = cv2.imread(filePs)
+    # img = cv2.imread(filePs)
     # seg 分析后的 mask
     seg_mask = np.load(npy_path)
 
+    print('utils seg_param {}'.format(seg_param))
     mask_rois = get_roi(seg_mask, seg_param)
 
     result_arr = []
@@ -26,7 +27,10 @@ def process_seg_result(filePs=None, seg_param=[], segpx=0, segopt=-1, seg_mask=N
         if len(lsPointsChoose) == 2:
             img_area = (lsPointsChoose[1][0]-lsPointsChoose[0][0]) * (lsPointsChoose[1][1]-lsPointsChoose[0][1])
         elif len(lsPointsChoose) > 2:
-            img_area = cv2.contourArea(lsPointsChoose)
+            pts = np.array([lsPointsChoose], np.int32)
+            # pts.shape=(点个数，2)
+            pts = pts.reshape((-1, 1, 2))  # -1代表剩下的维度自动计算
+            img_area = cv2.contourArea(pts)
         mask_roi = mask_rois[index]
         if segopt == 0:
             # 返回覆盖部分

@@ -64,11 +64,14 @@ def task_listener_reverse(gearman_worker, gearman_job):
     print('inference time cost {}'.format(time_inference-time_read_img))
     # print(path)
     # print(mask)
-    q_file.put(mask)
-    q_name.put(npy_path)
+    # 多进程处理
+    # q_file.put(mask)
+    # q_name.put(npy_path)
+
     print('put queue value time cost {}'.format(time.time()-time_inference))
+    # 单进程处理
     # print(npy_path)
-    # np.save(npy_path, mask)
+    np.save(npy_path, mask)
     time_cost = time.time()-time_start
     print('api + read img cost {}'.format(time_cost))
     with open('./logs/det_server.log', 'a+') as w:
@@ -92,8 +95,8 @@ if __name__ == '__main__':
     semseg_inference = module(cfg_file='/home/user/workspace/priv-0220/Vas/yaml/seg_smart_ground.yaml')
     
     # 启动 子进程
-    pr = Process(target=read_q, args=(q_file, q_name))
-    pr.start()
+    # pr = Process(target=read_q, args=(q_file, q_name))
+    # pr.start()
 
     # pw_1.join()
     # pr.join()

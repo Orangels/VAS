@@ -44,10 +44,18 @@ def detect_det_seg():
             获取参数
         '''
         time_start = time.time()
-        seg_param = request.values.getlist('seg')
+        # 0: list,  1:str
+        seg_param_test_type = int(request.values.get('seg_param_type', 1))
+        if seg_param_test_type:
+            seg_param = eval(request.values.get('seg'))
+        else:
+            seg_param = request.values.getlist('seg')
+        # seg_param = request.values.getlist('seg')
+        # seg_param = eval(request.values.get('seg'))
         seg_param_points = []
         for i, item in enumerate(seg_param):
-            seg_param[i] = list(eval(item))
+            if seg_param_test_type == 0:
+                seg_param[i] = list(eval(item))
             seg_param_points.append([])
             for j in range(0, len(seg_param[i]), 2):
                 seg_param_points[i].append((seg_param[i][j], seg_param[i][j+1]))
@@ -57,7 +65,7 @@ def detect_det_seg():
         segpx = int(request.values.get('segpx', 0))
 
         # 语义分割结果选项，0: 返回覆盖部分(占比/像素), 1: 返回裸露部分。缺省为 0, -1 为自定义无参数
-        segopt = int(request.values.get('segopt', -1))
+        segopt = int(request.values.get('segopt', 0))
         conf = int(request.values.get('conf', 0))
         detect_type = 1
         if od == 1 and seg_type == 0:
@@ -67,7 +75,7 @@ def detect_det_seg():
         elif od == 1 and seg_type != 0:
             detect_type = 3
         elif od == 0 and seg_type == 0:
-            dic = dict(Results=400, result={
+            dic = dict(code=400, result={
                 'objs': [],
                 'segs': [],
             })
@@ -100,14 +108,14 @@ def detect_det_seg():
         print('gearman cost {}'.format(time.time()-time_gearman_start))
         os.remove(filePs)
         print('api cost {}'.format(time.time() - time_start))
-        dic = dict(Results=200, request=gearman_res)
+        dic = dict(code=200, result=gearman_res)
         return jsonify(dic)
     except Exception as e:
         print('***********')
         print(e)
         traceback.print_exc()
         print('***********')
-        dic = dict(Results=400, result={
+        dic = dict(code=400, result={
             'objs': [],
             'segs': [],
         })

@@ -57,20 +57,22 @@ def check_request_status(job_request, detect_type, filePs=None, seg_param=[], se
     return gearman_res
 
 
-def client(detect_type, filePs, seg_param, segpx=0, segopt=-1):
+def client(detect_type, filePs, seg_param, segpx=0, segopt=-1, od_conf=0):
     """
     :param detect_type: 1: detect, 2: seg 3: detect + seg
     :param filePs:
     :param segpx: 0: 不返回 seg 坐标, 1: 返回坐标
     :param segopt: -1 不返回覆盖比, 0: 覆盖部分覆盖比 1: 裸露部分覆盖比
+    :param od_conf: 0 检测阈值, 0 时用默认阈值, 百分比整数
     :return:
     """
+    print('seg_param -- {}'.format(seg_param))
     gm_client = gearman.GearmanClient(['127.0.0.1:4730'])
     if detect_type == 1:
         print('type {}'.format(detect_type))
         jobs = [
-            dict(task='smart_site_det_car', data=json.dumps(obj=dict(path=filePs))),
-            dict(task='smart_site_det_fog', data=json.dumps(obj=dict(path=filePs)))
+            dict(task='smart_site_det_car', data=json.dumps(obj=dict(path=filePs, od_conf=od_conf))),
+            dict(task='smart_site_det_fog', data=json.dumps(obj=dict(path=filePs, od_conf=od_conf)))
         ]
         completed_job_request = gm_client.submit_multiple_jobs(jobs, poll_timeout=60)
     elif detect_type == 2:
@@ -81,8 +83,8 @@ def client(detect_type, filePs, seg_param, segpx=0, segopt=-1):
     elif detect_type == 3:
         print('type {}'.format(detect_type))
         jobs = [
-            dict(task='smart_site_det_car', data=json.dumps(obj=dict(path=filePs))),
-            dict(task='smart_site_det_fog', data=json.dumps(obj=dict(path=filePs))),
+            dict(task='smart_site_det_car', data=json.dumps(obj=dict(path=filePs, od_conf=od_conf))),
+            dict(task='smart_site_det_fog', data=json.dumps(obj=dict(path=filePs, od_conf=od_conf))),
             dict(task='smart_site_seg', data=json.dumps(obj=dict(path=filePs,
                                                         seg_param=seg_param,
                                                   )))

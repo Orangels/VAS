@@ -45,17 +45,21 @@ def uploadFile(log):
             #                         open('P001067.png',
             #                              'rb'))}  # 显式的设置文件名
             # fog
-            files = {'img': ('P000005.png',
-                             open('P000005.png',
-                                  'rb'))}  # 显式的设置文件名
+            # files = {'img': ('P000005.png',
+            #                  open('P000005.png',
+            #                       'rb'))}  # 显式的设置文件名
             
             # seg
-            # files = {'img': ('P000014.png',
-            #                  open('P000014.png',
-            #                       'rb'))}  # 显式的设置文件名
+            files = {'img': ('ht_test.jpg',
+                             open('/home/user/workspace/priv-0220/Vas/test/0226_0.jpg',
+                                  'rb'))}  # 显式的设置文件名
             # post携带的数据
             # data = dict(seg=[[0, 0, 1400, 500], [0, 500, 1400, 1000]], segpx=0, segopt=0, od=1)
-            data = dict(seg=[[0, 0, 500, 100], [0, 100, 500, 300]], segpx=0, segopt=0, od=1)
+            # data = dict(seg=[[0, 0, 500, 100], [0, 100, 500, 300]], segpx=0, segopt=0, od=1)
+            data = dict(seg=[[0, 80, 600, 80, 600, 336, 0, 336]], segpx=0, segopt=0, od=1, conf=40, seg_param_type=0)
+            seg_param = json.dumps(obj=[[0, 80, 600, 80, 600, 336, 0, 336]])
+            # data = dict(seg=seg_param, segpx=0, segopt=0, od=1, conf=40, seg_param_type=1)
+            # data = dict(segpx=0, segopt=0, od=1, conf=40)
 
             # type = 3 det + seg
             # r = requests.post(url, files=files, data=data)
@@ -114,7 +118,7 @@ def uploadFile(log):
     # print('db time cost {:.4f}'.format(time_db / circle_num))
     # print('total time used cost {:.4f}'.format(time_total / circle_num))
     # print('post mean time cost {:.4f}'.format((time.time() - time_begin) / circle_num))
-    with open(log, 'w') as w:
+    # with open(log, 'w') as w:
         # w.write(image_mean_time)
         # w.write(infer_mean_time)
         # w.write(client_mean_time)
@@ -123,8 +127,8 @@ def uploadFile(log):
         # w.write(total_time)
         # w.write(post_mean_time)
         # w.write(json.dumps(detail_time))
-        w.write('response: ')
-        w.write(r.text + '\n')
+        # w.write('response: ')
+        # w.write(r.text + '\n')
 
 
 
