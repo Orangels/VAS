@@ -44,6 +44,7 @@ def process_seg_result(filePs=None, seg_param=[], segpx=0, segopt=-1, seg_mask=N
                     c_list.append(mask_segopt[i].reshape(-1, 1))
                 # 坐标
                 mask_coor = np.hstack((c_list[0], c_list[1]))
+                mask_coor = mask_coor.reshape(-1)
                 mask_coor = mask_coor.tolist()
                 result_arr.append(dict(ratio=ratio, pixels=mask_coor))
             else:
@@ -60,6 +61,7 @@ def process_seg_result(filePs=None, seg_param=[], segpx=0, segopt=-1, seg_mask=N
                     c_list.append(mask_segopt[i].reshape(-1, 1))
                 # 坐标
                 mask_coor = np.hstack((c_list[0], c_list[1]))
+                mask_coor = mask_coor.reshape(-1)
                 mask_coor = mask_coor.tolist()
                 result_arr.append(dict(ratio=ratio, pixels=mask_coor))
             else:
@@ -121,25 +123,76 @@ def color_encode(labelmap, colors, mode='RGB'):
         return labelmap_rgb
 
 
+def pred_merge(img, pred, colors, mask_alpha=0.3):
+    """Merge mask to pic."""
+    img = np.array(img).astype(np.float32)
+    idx = np.nonzero(pred)
+
+    mask_color = color_encode(pred, colors, mode='BGR')
+    img[idx[0], idx[1], :] *= 1.0 - mask_alpha
+    img[idx[0], idx[1], :] += mask_alpha * mask_color[idx[0], idx[1], :]
+
+    return img.astype(np.uint8)
+
+
+def mat_inter(box1, box2):
+    # 判断两个矩形是否相交
+    # box=(xA,yA,xB,yB)
+    x01, y01, x02, y02 = box1
+    x11, y11, x12, y12 = box2
+
+    lx = abs((x01 + x02) / 2 - (x11 + x12) / 2)
+    ly = abs((y01 + y02) / 2 - (y11 + y12) / 2)
+    sax = abs(x01 - x02)
+    sbx = abs(x11 - x12)
+    say = abs(y01 - y02)
+    sby = abs(y11 - y12)
+    if lx <= (sax + sbx) / 2 and ly <= (say + sby) / 2:
+        return True
+    else:
+        return False
+
+
+def solve_coincide(box1, box2):
+    # box=(xA,yA,xB,yB)
+    # 计算两个矩形框的重合度
+    if mat_inter(box1, box2) == True:
+        x01, y01, x02, y02 = box1
+        x11, y11, x12, y12 = box2
+        col = min(x02, x12) - max(x01, x11)
+        row = min(y02, y12) - max(y01, y11)
+        intersection = col * row
+        area1 = (x02 - x01) * (y02 - y01)
+        area2 = (x12 - x11) * (y12 - y11)
+        coincide = intersection / (area1 + area2 - intersection)
+        return coincide
+    else:
+        return False
+
+
+
 if __name__ == '__main__':
     # print(transform_extension_path('/Users/liusen/Documents/sz/智慧工地/Vas/test/test_seg.png'))
-    # img = cv2.imread('/Users/liusen/Documents/sz/智慧工地/Vas/test/P000014.png')
-    # seg_mask = np.load('/Users/liusen/Documents/sz/智慧工地/Vas/test/mask.npy')
+    img = cv2.imread('/Users/liusen/Documents/sz/智慧工地/Vas/test/P000014.png')
+    seg_mask = np.load('/Users/liusen/Documents/sz/智慧工地/Vas/test/mask.npy')
     # seg_mask = seg_mask.astype(np.uint8)
-    # from scipy.io import loadmat
+    from scipy.io import loadmat
     #
-    # colors = loadmat('/Users/liusen/Documents/sz/智慧工地/Vas/test/color150.mat')['colors']
-    # pred_color = color_encode(seg_mask, colors)
+    colors = loadmat('/Users/liusen/Documents/sz/智慧工地/Vas/test/color150.mat')['colors']
+
+    # pred_mask = color_encode(seg_mask, colors)
+    pred_color = pred_merge(img, seg_mask, colors, 0.5)
     # im_vis = np.concatenate((img, pred_color),
     #                         axis=1).astype(np.uint8)
     # # get_roi(seg_mask, [[(0, 0), (700, 500)], [(700, 0), (1400, 1000)]])
-    # cv2.imshow('test', pred_color)
-    # cv2.waitKey(0)
+    cv2.imshow('mask', pred_color)
+    # cv2.imshow('test', pred_mask)
+    cv2.waitKey(0)
 
-    seg_mask = np.load('/Users/liusen/Documents/sz/智慧工地/Vas/test/mask.npy')
-    result = process_seg_result(filePs='/Users/liusen/Documents/sz/智慧工地/Vas/test/P000014.png',
-                       seg_param=[[(0, 0), (700, 500)], [(700, 0), (1400, 1000)]],
-                       segpx=1,
-                       segopt=0,
-                       seg_mask=None)
+    # seg_mask = np.load('/Users/liusen/Documents/sz/智慧工地/Vas/test/mask.npy')
+    # result = process_seg_result(filePs='/Users/liusen/Documents/sz/智慧工地/Vas/test/P000014.png',
+    #                    seg_param=[[(0, 0), (700, 500)], [(700, 0), (1400, 1000)]],
+    #                    segpx=1,
+    #                    segopt=0,
+    #                    seg_mask=None)
     print(1)

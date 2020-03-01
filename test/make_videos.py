@@ -16,16 +16,19 @@ def unlock_movie(path):
     frame_count = 0
     fps = int(cap.get(cv2.CAP_PROP_FPS))
     suc, frame = cap.read()
-    videoWriter = cv2.VideoWriter(out_path, fourcc, fps, (1280, 720))
-    videoWriter.write(frame)
+    # videoWriter = cv2.VideoWriter(out_path, fourcc, fps, (1280, 720))
+    # videoWriter.write(frame)
     while suc:
         frame_count += 1
         suc, frame = cap.read()
+        print(frame_count)
         # cv2.imwrite('{}/{}.png'.format(img_path, str(frame_count).zfill(5)), frame)
-        videoWriter.write(frame)
-        if frame_count % 500 == 0:
+        # videoWriter.write(frame)
+        # if frame_count % 500 == 0:
+        if frame_count % 4500 == 0:
             print('decode num -- {}'.format(frame_count))
-    videoWriter.release()
+            cv2.imwrite('{}/{}.png'.format(img_path, str(frame_count).zfill(5)), frame)
+    # videoWriter.release()
 
     cap.release()
     print('unlock movie: ', frame_count)

@@ -47,7 +47,7 @@ def detect_det_seg():
         # 0: list,  1:str
         seg_param_test_type = int(request.values.get('seg_param_type', 1))
         if seg_param_test_type:
-            seg_param = eval(request.values.get('seg'))
+            seg_param = eval(request.values.get('seg', '[]'))
         else:
             seg_param = request.values.getlist('seg')
         # seg_param = request.values.getlist('seg')
@@ -103,7 +103,7 @@ def detect_det_seg():
         uploaded_file.save(filePs)
         time_gearman_start = time.time()
         print('gearman start')
-        gearman_res = client(detect_type, filePs, seg_param_points, segpx, segopt)
+        gearman_res = client(detect_type, filePs, seg_param_points, segpx, segopt, conf)
         print('gearman end')
         print('gearman cost {}'.format(time.time()-time_gearman_start))
         os.remove(filePs)

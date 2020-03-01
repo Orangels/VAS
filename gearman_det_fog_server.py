@@ -13,7 +13,7 @@ from modules import pet_engine
 threshold_default = 0.7
 det = None
 labels = ['背景', '雾炮机关', '雾炮机开', '雾']
-oid = dict(雾炮机关=3, 雾炮机开=2, 雾=1)
+oid = dict(雾炮机关=3, 雾炮机开=2, 雾=0)
 
 gm_worker = gearman.GearmanWorker(['localhost:4730'])
 
@@ -72,13 +72,13 @@ if __name__ == '__main__':
     module = pet_engine.MODULES['SSDDet']
 
     if len(sys.argv) < 2:
-        det = module(cfg_file='./yaml/ssd_VGG16_300x300_1x/ssd_VGG16_300x300_fog_1x.yaml',
+        det = module(cfg_file='./yaml/ssd_VGG16_512x512_1x_vehicle/ssd_VGG16_512x512_1x_vehicle_fog.yaml',
                      cfg_list=['VIS.VIS_TH', threshold_default,
                                'VIS.SHOW_BOX.COLOR_SCHEME', None]
                      )
     else:
         channel_id = int(sys.argv[1])
-        det = module(cfg_file='./yaml/ssd_VGG16_300x300_1x/ssd_VGG16_300x300_fog_1x.yaml',
+        det = module(cfg_file='./yaml/ssd_VGG16_512x512_1x_vehicle/ssd_VGG16_512x512_1x_vehicle_fog.yaml',
                      cfg_list=['VIS.VIS_TH', threshold_default,
                                'VIS.SHOW_BOX.COLOR_SCHEME', None,
                                'MODULES.SSDDET.GPU_ID', channel_id
