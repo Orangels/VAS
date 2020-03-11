@@ -2,6 +2,10 @@ import json
 import cv2
 import numpy as np
 import os
+import copy
+from scipy.io import loadmat
+# colors = loadmat('/Users/liusen/Documents/sz/智慧工地/Vas/test/color150.mat')['colors']
+colors = loadmat('/home/user/workspace/priv-0220/privision_test/color150.mat')['colors']
 
 
 def process_seg_result(filePs=None, seg_param=[], segpx=0, segopt=-1, seg_mask=None):
@@ -9,7 +13,7 @@ def process_seg_result(filePs=None, seg_param=[], segpx=0, segopt=-1, seg_mask=N
     :param filePs:
     :param seg_param: seg 检测区域
     :param segpx: 0: 不返回 seg 坐标, 1: 返回坐标
-    :param segopt: -1 不返回覆盖比, 0: 覆盖部分覆盖比 1: 裸露部分覆盖比
+    :param segopt: -1 不返回覆盖比, 0: 覆盖部分覆盖比 1: 裸露部分覆盖比 (全 mask)  2: 覆盖部分轮廓, 3:裸露部分轮廓(轮廓)
     :param seg_mask: mask numpy 转的 str
     :return:
     """
@@ -23,6 +27,15 @@ def process_seg_result(filePs=None, seg_param=[], segpx=0, segopt=-1, seg_mask=N
     mask_rois = get_roi(seg_mask, seg_param)
 
     result_arr = []
+
+    # 找轮廓, color_1 颜色是深色, 为所找轮廓, 找覆盖区域时 调换 color_1 color_2 位置
+    colors_copy = copy.deepcopy(colors)
+    color_1 = copy.deepcopy(colors_copy[1])
+    color_2 = copy.deepcopy(colors_copy[2])
+    if segopt == 1:
+        colors_copy[1], colors_copy[2] = color_2, color_1
+    cv2_v = (cv2.__version__).split('.')[0]
+
     for index, lsPointsChoose in enumerate(seg_param):
         if len(lsPointsChoose) == 2:
             img_area = (lsPointsChoose[1][0]-lsPointsChoose[0][0]) * (lsPointsChoose[1][1]-lsPointsChoose[0][1])
@@ -32,18 +45,44 @@ def process_seg_result(filePs=None, seg_param=[], segpx=0, segopt=-1, seg_mask=N
             pts = pts.reshape((-1, 1, 2))  # -1代表剩下的维度自动计算
             img_area = cv2.contourArea(pts)
         mask_roi = mask_rois[index]
+
         if segopt == 0:
             # 返回覆盖部分
             mask_segopt = np.where(mask_roi == 1)
             mask_area = mask_segopt[0].shape[0]
             # 覆盖比
             ratio = int(mask_area / img_area * 100)
-            if segpx:
-                c_list = []
+            c_list = []
+            if segpx == 2:
+                # 找轮廓
+                pred_mask = color_encode(mask_roi, colors_copy)
+                gray = cv2.cvtColor(pred_mask, cv2.COLOR_BGR2GRAY)
+                ret, binary = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+                if int(cv2_v) == 3:
+                    binary, contours, hierarchy = cv2.findContours(binary, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+                else:
+                    contours, hierarchy = cv2.findContours(binary, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+                # if index == 1:
+                #     cv2.drawContours(pred_mask, contours, -1, (0, 0, 255), 3)
+                #     cv2.imshow('test', pred_mask)
+                #     cv2.waitKey(0)
+                for i in range(len(contours)):
+                    c_list.append(contours[i].reshape(-1).tolist())
+
+                # for i in range(len(mask_segopt)):
+                #     c_list.append(mask_segopt[i].reshape(-1, 1))
+                # 坐标 x: [1] y:[0]
+                # mask_coor = np.hstack((c_list[1], c_list[0]))
+                # mask_coor = mask_coor.reshape(-1)
+                # mask_coor = mask_coor.tolist()
+                # result_arr.append(dict(ratio=ratio, pixels=mask_coor))
+
+                result_arr.append(dict(ratio=ratio, pixels=c_list))
+            elif segpx == 1:
                 for i in range(len(mask_segopt)):
                     c_list.append(mask_segopt[i].reshape(-1, 1))
-                # 坐标
-                mask_coor = np.hstack((c_list[0], c_list[1]))
+                # 坐标 x: [1] y:[0]
+                mask_coor = np.hstack((c_list[1], c_list[0]))
                 mask_coor = mask_coor.reshape(-1)
                 mask_coor = mask_coor.tolist()
                 result_arr.append(dict(ratio=ratio, pixels=mask_coor))
@@ -55,12 +94,40 @@ def process_seg_result(filePs=None, seg_param=[], segpx=0, segopt=-1, seg_mask=N
             mask_area = mask_segopt[0].shape[0]
             # 覆盖比
             ratio = int(mask_area / img_area * 100)
-            if segpx:
-                c_list = []
+            c_list = []
+            if segpx == 2:
+                # 找轮廓
+                pred_mask = color_encode(mask_roi, colors_copy)
+                gray = cv2.cvtColor(pred_mask, cv2.COLOR_BGR2GRAY)
+                ret, binary = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+                if int(cv2_v) == 3:
+                    binary, contours, hierarchy = cv2.findContours(binary, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+                else:
+                    contours, hierarchy = cv2.findContours(binary, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+
+                # if index == 1:
+                #     cv2.drawContours(pred_mask, contours, -1, (0, 0, 255), 3)
+                #     cv2.imshow('test', pred_mask)
+                #     cv2.waitKey(0)
+
+                for i in range(len(contours)):
+                    c_list.append(contours[i].reshape(-1).tolist())
+
+                # for i in range(len(mask_segopt)):
+                #     c_list.append(mask_segopt[i].reshape(-1, 1))
+                #
+                # # 坐标 x: [1] y:[0]
+                # mask_coor = np.hstack((c_list[1], c_list[0]))
+                # mask_coor = mask_coor.reshape(-1)
+                # mask_coor = mask_coor.tolist()
+                # result_arr.append(dict(ratio=ratio, pixels=mask_coor))
+
+                result_arr.append(dict(ratio=ratio, pixels=c_list))
+            elif segpx == 1:
                 for i in range(len(mask_segopt)):
                     c_list.append(mask_segopt[i].reshape(-1, 1))
-                # 坐标
-                mask_coor = np.hstack((c_list[0], c_list[1]))
+                # 坐标 x: [1] y:[0]
+                mask_coor = np.hstack((c_list[1], c_list[0]))
                 mask_coor = mask_coor.reshape(-1)
                 mask_coor = mask_coor.tolist()
                 result_arr.append(dict(ratio=ratio, pixels=mask_coor))
@@ -170,29 +237,45 @@ def solve_coincide(box1, box2):
         return False
 
 
-
 if __name__ == '__main__':
     # print(transform_extension_path('/Users/liusen/Documents/sz/智慧工地/Vas/test/test_seg.png'))
     img = cv2.imread('/Users/liusen/Documents/sz/智慧工地/Vas/test/P000014.png')
-    seg_mask = np.load('/Users/liusen/Documents/sz/智慧工地/Vas/test/mask.npy')
+    seg_mask = np.load('/Users/liusen/Documents/sz/智慧工地/Vas/test/P000014.npy')
     # seg_mask = seg_mask.astype(np.uint8)
     from scipy.io import loadmat
     #
     colors = loadmat('/Users/liusen/Documents/sz/智慧工地/Vas/test/color150.mat')['colors']
+    colors_copy = copy.deepcopy(colors)
 
-    # pred_mask = color_encode(seg_mask, colors)
-    pred_color = pred_merge(img, seg_mask, colors, 0.5)
-    # im_vis = np.concatenate((img, pred_color),
-    #                         axis=1).astype(np.uint8)
-    # # get_roi(seg_mask, [[(0, 0), (700, 500)], [(700, 0), (1400, 1000)]])
-    cv2.imshow('mask', pred_color)
+    color_1 = copy.deepcopy(colors_copy[1])
+    color_2 = copy.deepcopy(colors_copy[2])
+
+    # colors[1], colors[2] = color_2, color_1
+
+    pred_mask = color_encode(seg_mask, colors)
+    gray = cv2.cvtColor(pred_mask, cv2.COLOR_BGR2GRAY)
+    ret, binary = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+    cv2_v = (cv2.__version__).split('.')[0]
+    if int(cv2_v) == 3:
+        binary, contours, hierarchy = cv2.findContours(binary, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+    else:
+        contours, hierarchy = cv2.findContours(binary, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+    cv2.drawContours(pred_mask, contours, -1, (0, 0, 255), 3)
+    #
+    # # pred_color = color_encode(cv2.resize(seg_mask.astype(np.uint8), size), colors)
+    # # pred_color = pred_merge(img, seg_mask, colors, 0.5)
+    # # # im_vis = np.concatenate((img, pred_color),
+    # # #                         axis=1).astype(np.uint8)
+    # # # # get_roi(seg_mask, [[(0, 0), (700, 500)], [(700, 0), (1400, 1000)]])
+    # cv2.imshow('mask', pred_color)
     # cv2.imshow('test', pred_mask)
-    cv2.waitKey(0)
+    # cv2.imshow('test1', binary)
+    # cv2.waitKey(0)
 
-    # seg_mask = np.load('/Users/liusen/Documents/sz/智慧工地/Vas/test/mask.npy')
-    # result = process_seg_result(filePs='/Users/liusen/Documents/sz/智慧工地/Vas/test/P000014.png',
-    #                    seg_param=[[(0, 0), (700, 500)], [(700, 0), (1400, 1000)]],
-    #                    segpx=1,
-    #                    segopt=0,
-    #                    seg_mask=None)
+    seg_mask = np.load('/Users/liusen/Documents/sz/智慧工地/Vas/test/mask.npy')
+    result = process_seg_result(filePs='/Users/liusen/Documents/sz/智慧工地/Vas/test/P000014.png',
+                       seg_param=[[(0, 0), (700, 500)], [(700, 0), (1400, 1000)]],
+                       segpx=1,
+                       segopt=1,
+                       seg_mask=None)
     print(1)

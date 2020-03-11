@@ -7,7 +7,8 @@ import sys
 import traceback
 
 def uploadFile(log):
-    url = 'http://127.0.0.1:9000/api/v1/detect'
+    # url = 'http://127.0.0.1:9000/api/v1/detect'
+    url = 'http://10.4.1.5:9000/api/v1/detect'
     # files = {'file': open('D:/tmp/1.jpg', 'rb')}
 
     # headers = requests.utils.default_headers()
@@ -51,7 +52,7 @@ def uploadFile(log):
             
             # seg
             files = {'img': ('ht_test.jpg',
-                             open('/home/user/workspace/priv-0220/Vas/test/0226_0.jpg',
+                             open('/home/user/workspace/priv-0220/Vas/test/ht_test.jpg',
                                   'rb'))}  # 显式的设置文件名
             # post携带的数据
             # data = dict(seg=[[0, 0, 1400, 500], [0, 500, 1400, 1000]], segpx=0, segopt=0, od=1)
