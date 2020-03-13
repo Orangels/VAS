@@ -12,7 +12,7 @@ def process_seg_result(filePs=None, seg_param=[], segpx=0, segopt=-1, seg_mask=N
     """
     :param filePs:
     :param seg_param: seg 检测区域
-    :param segpx: 0: 不返回 seg 坐标, 1: 返回坐标
+    :param segpx: 0: 不返回 seg 坐标, 1: 返回像素坐标, 2:返回轮廓
     :param segopt: -1 不返回覆盖比, 0: 覆盖部分覆盖比 1: 裸露部分覆盖比 (全 mask)  2: 覆盖部分轮廓, 3:裸露部分轮廓(轮廓)
     :param seg_mask: mask numpy 转的 str
     :return:
@@ -77,7 +77,7 @@ def process_seg_result(filePs=None, seg_param=[], segpx=0, segopt=-1, seg_mask=N
                 # mask_coor = mask_coor.tolist()
                 # result_arr.append(dict(ratio=ratio, pixels=mask_coor))
 
-                result_arr.append(dict(ratio=ratio, pixels=c_list))
+                result_arr.append(dict(ratio=ratio, contours=c_list))
             elif segpx == 1:
                 for i in range(len(mask_segopt)):
                     c_list.append(mask_segopt[i].reshape(-1, 1))
@@ -122,7 +122,7 @@ def process_seg_result(filePs=None, seg_param=[], segpx=0, segopt=-1, seg_mask=N
                 # mask_coor = mask_coor.tolist()
                 # result_arr.append(dict(ratio=ratio, pixels=mask_coor))
 
-                result_arr.append(dict(ratio=ratio, pixels=c_list))
+                result_arr.append(dict(ratio=ratio, contours=c_list))
             elif segpx == 1:
                 for i in range(len(mask_segopt)):
                     c_list.append(mask_segopt[i].reshape(-1, 1))
